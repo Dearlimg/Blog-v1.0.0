@@ -1,0 +1,54 @@
+version: '3'
+
+#   为软协同学所编写的后端基础组件docker-compose,只包含最基础组件,还需要其他的自己可以尝试编写一下
+
+
+#  修改文件权限
+#  chown -R 1001:1001 ./components
+#  一般来说,为了养成好习惯,自己在linux根目录定义一个自己的文件夹,例如:./xyy 然后在里面映射,安装自己所需要的东西,而component文件夹推荐放置在自定义目录下
+
+
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    container_name: redis
+    volumes:
+      - ./components/redis/data:/data
+      - ./components/redis/config/redis.conf:/usr/local/redis/config/redis.conf
+    environment:
+      TZ: Asia/Shanghai
+    restart: always
+    command: redis-server --requirepass sta_go --appendonly yes
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - 3307:3306
+    container_name: mysql
+    volumes:
+      - ./components/mysql/data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime
+    environment:
+      MYSQL_ROOT_PASSWORD: sta_go
+    restart: always
+
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - 9092:9092
+    container_name: kafka
+    volumes:
+      - ./components/kafka/kafka-persistence:/bitnami/kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    restart: always
+
+
